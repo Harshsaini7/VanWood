@@ -1,0 +1,34 @@
+# ===========================
+# Node.js Dependencies
+# ===========================
+node_modules/
+
+# ===========================
+# Environment Variables
+# (Never commit secrets!)
+# ===========================
+.env
+.env.local
+.env.production
+
+# ===========================
+# Build Output
+# ===========================
+dist/
+build/
+
+# ===========================
+# IDE & OS Files
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Logs
+# ===========================
+*.log
+npm-debug.log*

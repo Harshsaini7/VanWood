@@ -11,7 +11,8 @@ const {
   updateProduct,
   deleteProduct,
 } = require("../controllers/productController");
-const { protect, admin } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
+const { admin } = require("../middleware/adminMiddleware");
 
 // GET /api/products — Get all products (public)
 router.get("/", getProducts);

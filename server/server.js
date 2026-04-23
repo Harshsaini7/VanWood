@@ -1,13 +1,14 @@
 // ===========================
 // VanWood — Main Server Entry Point
 // This file sets up the Express app, connects middleware,
-// connects to MongoDB, and starts the server.
+// mounts API routes, connects to MongoDB, and starts the server.
 // ===========================
 
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
+const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 // Load environment variables from .env file (must be called early)
 dotenv.config();
@@ -46,11 +47,22 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// TODO: Add more routes here as you build features
-// Example:
-// app.use("/api/auth", require("./routes/authRoutes"));
-// app.use("/api/products", require("./routes/productRoutes"));
-// app.use("/api/orders", require("./routes/orderRoutes"));
+// Authentication routes — register, login, get current user
+app.use("/api/auth", require("./routes/authRoutes"));
+
+// Product routes — CRUD operations for furniture products
+app.use("/api/products", require("./routes/productRoutes"));
+
+// ===========================
+// Error Handling Middleware
+// These must be AFTER all route definitions
+// ===========================
+
+// Handle 404 — catches requests that don't match any route
+app.use(notFound);
+
+// Global error handler — catches all thrown errors and returns consistent JSON
+app.use(errorHandler);
 
 // ===========================
 // Start the Server
@@ -63,5 +75,7 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`✅ VanWood server is running on http://localhost:${PORT}`);
     console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`🔐 Auth routes:  http://localhost:${PORT}/api/auth`);
+    console.log(`📦 Product routes: http://localhost:${PORT}/api/products`);
   });
 });

@@ -23,6 +23,11 @@ const userSchema = new mongoose.Schema(
       unique: true, // No two users can have the same email
       lowercase: true, // Store emails in lowercase for consistency
       trim: true,
+      // Validate email format using a regex pattern
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        "Please provide a valid email address",
+      ],
     },
 
     // Hashed password (never stored as plain text)
@@ -37,6 +42,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    // Avatar URL — profile picture for the user
+    // Defaults to a placeholder avatar if none is provided
+    avatar: {
+      type: String,
+      default: "https://ui-avatars.com/api/?name=User&background=random&size=200",
     },
 
     // Phone number (optional, useful for order delivery)
@@ -65,14 +77,13 @@ const userSchema = new mongoose.Schema(
 // Before saving a user, hash the password if it was modified.
 // This runs automatically before every save() call.
 // ===========================
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   // Only hash the password if it has been changed (or is new)
-  if (!this.isModified("password")) return next();
+  if (!this.isModified("password")) return;
 
   // Generate a salt (random string) and hash the password
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // ===========================

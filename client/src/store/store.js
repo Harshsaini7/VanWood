@@ -10,11 +10,13 @@ import { configureStore } from "@reduxjs/toolkit";
 // Add feature slices to the reducer object as you build them
 const store = configureStore({
   reducer: {
-    // TODO: Add slices as you build features, for example:
+    // Placeholder reducer — prevents "no valid reducer" warning
+    // Replace with feature slices as you build them:
     // auth: authReducer,
     // products: productReducer,
     // cart: cartReducer,
     // orders: orderReducer,
+    _placeholder: (state = {}) => state,
   },
 });
 

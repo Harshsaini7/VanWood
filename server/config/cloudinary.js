@@ -2,22 +2,27 @@
 // Cloudinary Configuration
 // Cloudinary is a cloud service for storing and managing images.
 // We use it to upload product images, banners, etc.
+//
+// Exports:
+//   cloudinary   — Cloudinary SDK instance (for deletions, transformations)
+//   upload       — Multer middleware with Cloudinary storage
 // ===========================
 
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
 
-// Configure Cloudinary with credentials from .env
+// ─── Configure Cloudinary SDK ───────────────────
+// Uses environment variables from .env file
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Set up Multer storage that uploads directly to Cloudinary
-// Multer handles file uploads in Express; this storage engine
-// sends files straight to Cloudinary instead of saving locally.
+// ─── Multer-Cloudinary Storage Engine ───────────
+// Files uploaded via Multer are sent directly to Cloudinary
+// instead of being saved to the local filesystem.
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -27,7 +32,26 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// Create the Multer upload middleware using Cloudinary storage
-const upload = multer({ storage });
+// ─── Create Multer Upload Middleware ────────────
+// This middleware handles multipart/form-data (file uploads)
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB per file
+  },
+});
 
-module.exports = { cloudinary, upload };
+// ─── Helper: Delete Image from Cloudinary ───────
+// Used when deleting a product or replacing images.
+// Accepts a Cloudinary public_id and removes the image.
+const deleteImage = async (publicId) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    console.error(`Failed to delete image ${publicId}:`, error.message);
+    throw error;
+  }
+};
+
+module.exports = { cloudinary, upload, deleteImage };

@@ -2,10 +2,57 @@
 // Product Model (Mongoose Schema)
 // Defines the structure for product documents in MongoDB.
 // Each product represents a handcrafted wooden item from Saharanpur.
+//
+// Fields: name, description, price, discountPrice, category, material,
+//         stock, images[], ratings, numReviews, reviews[], isFeatured,
+//         dimensions, weight, isActive
 // ===========================
 
 const mongoose = require("mongoose");
 
+// ─── Review Sub-Schema ──────────────────────────
+// Embedded subdocument for user reviews on products.
+// Each review stores the user reference, name, rating, comment, and timestamp.
+const reviewSchema = new mongoose.Schema(
+  {
+    // Reference to the User who wrote this review
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    // Reviewer's display name (denormalized for performance)
+    name: {
+      type: String,
+      required: true,
+    },
+
+    // Star rating (1–5)
+    rating: {
+      type: Number,
+      required: [true, "Please provide a rating"],
+      min: [1, "Rating must be at least 1"],
+      max: [5, "Rating cannot exceed 5"],
+    },
+
+    // Review text comment
+    comment: {
+      type: String,
+      required: [true, "Please provide a review comment"],
+      trim: true,
+    },
+
+    // When the review was created
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: true }
+);
+
+// ─── Product Schema ─────────────────────────────
 const productSchema = new mongoose.Schema(
   {
     // Product name (e.g., "Hand-Carved Sheesham Wood Bookshelf")
@@ -13,50 +60,46 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please provide product name"],
       trim: true,
+      maxlength: [200, "Product name cannot exceed 200 characters"],
     },
 
     // Detailed description of the product
     description: {
       type: String,
-      required: [true, "Please provide product description"],
+      default: "",
     },
 
-    // Price in INR (Indian Rupees)
+    // Selling price in INR (Indian Rupees)
     price: {
       type: Number,
       required: [true, "Please provide product price"],
       min: [0, "Price cannot be negative"],
     },
 
-    // Product category for filtering and browsing
+    // Original/MRP price before discount (optional)
+    // If set, the frontend shows this as the crossed-out price
+    discountPrice: {
+      type: Number,
+      default: 0,
+      min: [0, "Discount price cannot be negative"],
+    },
+
+    // Product category — matches the frontend filter options
     category: {
       type: String,
       required: [true, "Please provide product category"],
-      enum: [
-        "Living Room",
-        "Bedroom",
-        "Dining",
-        "Office",
-        "Home Decor",
-        "Kitchen",
-        "Storage",
-        "Other",
-      ],
-    },
-
-    // Type of wood used (important for handcrafted furniture)
-    woodType: {
-      type: String,
-      default: "Sheesham", // Sheesham is the most common wood from Saharanpur
-    },
-
-    // Array of image URLs (stored on Cloudinary)
-    images: [
-      {
-        url: { type: String, required: true }, // Image URL
-        public_id: { type: String, required: true }, // Cloudinary public ID (for deletion)
+      enum: {
+        values: ["Furniture", "Home Decor", "Handicrafts"],
+        message: "Category must be one of: Furniture, Home Decor, Handicrafts",
       },
-    ],
+    },
+
+    // Type of wood or material used
+    material: {
+      type: String,
+      default: "Sheesham Wood",
+      trim: true,
+    },
 
     // Number of items in stock
     stock: {
@@ -66,8 +109,17 @@ const productSchema = new mongoose.Schema(
       default: 1,
     },
 
-    // Average rating (updated when reviews are added)
-    rating: {
+    // Array of image objects (stored on Cloudinary)
+    // Each image has a URL for display and a public_id for deletion
+    images: [
+      {
+        url: { type: String, required: true },
+        public_id: { type: String, required: true },
+      },
+    ],
+
+    // Average rating (auto-calculated from reviews)
+    ratings: {
       type: Number,
       default: 0,
       min: 0,
@@ -80,20 +132,29 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Embedded array of user reviews
+    reviews: [reviewSchema],
+
+    // Whether the product is featured on the homepage
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+
     // Whether the product is currently available for sale
     isActive: {
       type: Boolean,
       default: true,
     },
 
-    // Dimensions of the product (useful for furniture)
+    // Physical dimensions (useful for furniture products)
     dimensions: {
       length: { type: String, default: "" },
       width: { type: String, default: "" },
       height: { type: String, default: "" },
     },
 
-    // Weight in kg
+    // Weight in kilograms
     weight: {
       type: Number,
       default: 0,
@@ -103,6 +164,14 @@ const productSchema = new mongoose.Schema(
     timestamps: true, // Adds createdAt and updatedAt
   }
 );
+
+// ─── Index for search performance ───────────────
+// Text index on name and description for keyword search
+productSchema.index({ name: "text", description: "text" });
+
+// Compound index for common filter queries
+productSchema.index({ category: 1, material: 1, price: 1 });
+productSchema.index({ isFeatured: 1, isActive: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 module.exports = Product;

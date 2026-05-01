@@ -57,6 +57,18 @@ export default {
           "0%": { transform: "translateX(100%)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
         },
+        scaleIn: {
+          "0%": { transform: "scale(0.9)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        slideOut: {
+          "0%": { transform: "translateX(0)", opacity: "1", maxHeight: "200px" },
+          "100%": { transform: "translateX(-30px)", opacity: "0", maxHeight: "0" },
+        },
+        pulse: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)" },
+        },
       },
       animation: {
         fadeUp: "fadeUp 0.8s ease-out forwards",
@@ -69,6 +81,9 @@ export default {
         shimmer: "shimmer 1.5s infinite linear",
         slideInLeft: "slideInLeft 0.3s ease-out forwards",
         slideInRight: "slideInRight 0.3s ease-out forwards",
+        scaleIn: "scaleIn 0.3s ease-out forwards",
+        slideOut: "slideOut 0.3s ease-out forwards",
+        pulse: "pulse 2s ease-in-out infinite",
       },
     },
   },

@@ -15,6 +15,9 @@ import { Toaster } from "react-hot-toast";
 import Home from "./pages/Home";
 import ProductListing from "./pages/ProductListing";
 import ProductDetail from "./pages/ProductDetail";
+import CartPage from "./pages/CartPage";
+import WishlistPage from "./pages/WishlistPage";
+import CheckoutPage from "./pages/CheckoutPage";
 
 // ScrollToTop — resets scroll on route change
 const ScrollToTop = () => {
@@ -61,10 +64,18 @@ function App() {
         {/* Product Detail Page */}
         <Route path="/products/:id" element={<ProductDetail />} />
 
+        {/* Cart Page */}
+        <Route path="/cart" element={<CartPage />} />
+
+        {/* Wishlist Page */}
+        <Route path="/wishlist" element={<WishlistPage />} />
+
+        {/* Checkout Page */}
+        <Route path="/checkout" element={<CheckoutPage />} />
+
         {/* TODO: Add more routes as you build pages */}
         {/* <Route path="/login" element={<Login />} /> */}
         {/* <Route path="/register" element={<Register />} /> */}
-        {/* <Route path="/cart" element={<Cart />} /> */}
       </Routes>
     </Router>
   );

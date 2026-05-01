@@ -6,6 +6,9 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart } from "../store/cartSlice";
+import { addToWishlist, removeFromWishlist } from "../store/wishlistSlice";
 import {
   FiShoppingCart,
   FiHeart,
@@ -19,6 +22,7 @@ import {
   FiPackage,
   FiArrowLeft,
 } from "react-icons/fi";
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/products/ProductCard";
@@ -26,14 +30,22 @@ import products, { sampleReviews } from "../data/productData";
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const dispatch = useDispatch();
+
+  // Redux state
+  const wishlistItems = useSelector((state) => state.wishlist.items);
+  const cartItems = useSelector((state) => state.cart.items);
+
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
-  const [wishlisted, setWishlisted] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
   const imageRef = useRef(null);
+
+  // Derive wishlist/cart status from Redux
+  const isWishlisted = wishlistItems.some((item) => item.id === parseInt(id));
+  const isInCart = cartItems.some((item) => item.id === parseInt(id));
 
   // Find the product by ID
   const product = products.find((p) => p.id === parseInt(id));
@@ -79,8 +91,31 @@ const ProductDetail = () => {
 
   // ─── Handlers ──────────────────────────────────
   const handleAddToCart = () => {
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (!product) return;
+    dispatch(
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        material: product.material,
+        image: null,
+        quantity: quantity,
+        stock: product.stock,
+      })
+    );
+    toast.success(`${product.name} added to cart`);
+  };
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(product.id));
+      toast.success("Removed from wishlist");
+    } else {
+      dispatch(addToWishlist(product));
+      toast.success("Added to wishlist");
+    }
   };
 
   const incrementQty = () => {
@@ -366,27 +401,27 @@ const ProductDetail = () => {
                 className={`flex-1 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 ${
                   product.stock === 0
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : addedToCart
+                    : isInCart
                     ? "bg-green-500 text-white shadow-lg shadow-green-500/20"
                     : "bg-gold hover:bg-gold-light text-darkwood shadow-lg shadow-gold/20 hover:shadow-xl hover:shadow-gold/30"
                 }`}
               >
                 <FiShoppingCart size={18} />
-                {addedToCart ? "Added to Cart!" : "Add to Cart"}
+                {isInCart ? "Added to Cart!" : "Add to Cart"}
               </button>
               <button
-                onClick={() => setWishlisted(!wishlisted)}
+                onClick={handleToggleWishlist}
                 className={`px-8 py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-300 border-2 ${
-                  wishlisted
+                  isWishlisted
                     ? "border-red-200 bg-red-50 text-red-500"
                     : "border-primary/20 hover:border-primary text-primary/70 hover:text-primary"
                 }`}
               >
                 <FiHeart
                   size={18}
-                  fill={wishlisted ? "currentColor" : "none"}
+                  fill={isWishlisted ? "currentColor" : "none"}
                 />
-                {wishlisted ? "Wishlisted" : "Wishlist"}
+                {isWishlisted ? "Wishlisted" : "Wishlist"}
               </button>
             </div>
 

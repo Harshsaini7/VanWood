@@ -2,19 +2,30 @@
 // Navbar Component
 // Sticky navigation bar with logo, links, cart, and auth buttons.
 // Includes mobile hamburger menu with slide-in drawer.
+// Cart/Wishlist badges are live from Redux state.
 // ===========================
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../store/authSlice";
 import {
   FiShoppingCart,
   FiMenu,
   FiX,
   FiUser,
   FiHeart,
+  FiLogOut,
 } from "react-icons/fi";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+
+  // Redux state
+  const { totalItems } = useSelector((state) => state.cart);
+  const wishlistItems = useSelector((state) => state.wishlist.items);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
   // Track mobile menu open/close state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -37,6 +48,11 @@ const Navbar = () => {
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setIsMenuOpen(false);
+  };
 
   return (
     <nav
@@ -73,12 +89,17 @@ const Navbar = () => {
 
           {/* ===== Desktop Right Actions ===== */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Wishlist Icon */}
+            {/* Wishlist Icon with Badge */}
             <Link
               to="/wishlist"
-              className="text-beige/70 hover:text-gold transition-colors duration-300 p-2"
+              className="relative text-beige/70 hover:text-gold transition-colors duration-300 p-2"
             >
               <FiHeart size={20} />
+              {wishlistItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {wishlistItems.length}
+                </span>
+              )}
             </Link>
 
             {/* Cart Icon with Badge */}
@@ -87,28 +108,47 @@ const Navbar = () => {
               className="relative text-beige/70 hover:text-gold transition-colors duration-300 p-2"
             >
               <FiShoppingCart size={20} />
-              {/* Item count badge — hardcoded for now */}
-              <span className="absolute -top-1 -right-1 bg-gold text-darkwood text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                0
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gold text-darkwood text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
-            {/* Login Button */}
-            <Link
-              to="/login"
-              className="text-beige/80 hover:text-cream font-medium text-sm transition-colors duration-300 flex items-center gap-1"
-            >
-              <FiUser size={16} />
-              Login
-            </Link>
+            {/* Auth Actions — conditional rendering */}
+            {isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <span className="text-beige/80 text-sm font-medium">
+                  {user?.name?.split(" ")[0] || "User"}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-beige/60 hover:text-red-400 transition-colors duration-300 p-2"
+                  aria-label="Logout"
+                >
+                  <FiLogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Login Button */}
+                <Link
+                  to="/login"
+                  className="text-beige/80 hover:text-cream font-medium text-sm transition-colors duration-300 flex items-center gap-1"
+                >
+                  <FiUser size={16} />
+                  Login
+                </Link>
 
-            {/* Sign Up Button */}
-            <Link
-              to="/register"
-              className="bg-gold hover:bg-gold-light text-darkwood font-semibold text-sm px-5 py-2 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-gold/20"
-            >
-              Sign Up
-            </Link>
+                {/* Sign Up Button */}
+                <Link
+                  to="/register"
+                  className="bg-gold hover:bg-gold-light text-darkwood font-semibold text-sm px-5 py-2 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-gold/20"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* ===== Mobile Menu Button ===== */}
@@ -172,7 +212,7 @@ const Navbar = () => {
             className="flex items-center gap-3 text-beige/80 hover:text-gold py-2 px-4 transition-colors"
           >
             <FiShoppingCart size={18} />
-            Cart (0)
+            Cart {totalItems > 0 && `(${totalItems})`}
           </Link>
           <Link
             to="/wishlist"
@@ -180,22 +220,35 @@ const Navbar = () => {
             className="flex items-center gap-3 text-beige/80 hover:text-gold py-2 px-4 transition-colors"
           >
             <FiHeart size={18} />
-            Wishlist
+            Wishlist {wishlistItems.length > 0 && `(${wishlistItems.length})`}
           </Link>
-          <Link
-            to="/login"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-center text-beige border border-beige/30 hover:border-gold hover:text-gold font-medium py-2.5 rounded-full transition-all duration-300"
-          >
-            Login
-          </Link>
-          <Link
-            to="/register"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-center bg-gold hover:bg-gold-light text-darkwood font-semibold py-2.5 rounded-full transition-all duration-300"
-          >
-            Sign Up
-          </Link>
+
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="text-center text-beige border border-red-400/30 hover:border-red-400 hover:text-red-400 font-medium py-2.5 rounded-full transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <FiLogOut size={16} />
+              Logout
+            </button>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-center text-beige border border-beige/30 hover:border-gold hover:text-gold font-medium py-2.5 rounded-full transition-all duration-300"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-center bg-gold hover:bg-gold-light text-darkwood font-semibold py-2.5 rounded-full transition-all duration-300"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
